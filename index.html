@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashUp - Save Money Smart</title>
+    <script src="https://cdn.tailwindcss.com"></script><style>
+        @keyframes bounce-in {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(-10deg); opacity: 0.8; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes coin-drop {
+            0% { transform: translateY(-100px) scale(0); opacity: 0; }
+            50% { transform: translateY(0) scale(1.2); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .bounce-in { animation: bounce-in 1.5s ease-out; }
+        .coin-drop { animation: coin-drop 0.8s ease-out; }
+        .coin-permanent {
+            position: absolute;
+            font-size: 20px;
+            z-index: 10;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head><body class="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500">
+    <div id="welcomeScreen" class="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500">
+        <div class="text-center">
+            <h1 id="titleAnimation" class="text-6xl font-bold text-white mb-8 opacity-0">
+                💰 CashUp! 💰
+            </h1>
+            <button id="letsStartBtn" class="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all opacity-0">
+                Let's Save! 🚀
+            </button>
+        </div>
+    </div><div id="loginScreen" class="fixed inset-0 flex items-center justify-center z-40 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 hidden">
+    <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+        <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Welcome to CashUp!</h2>
+        <p class="text-gray-600 text-center mb-6">Sign in to start your savings journey</p>
+        <div class="space-y-4">
+            <button onclick="loginWithGoogle()" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors">
+                <span>🔍</span>
+                <span>Continue with Google</span>
+            </button>
+            <div class="text-center text-gray-500">or</div>
+            <input type="email" id="emailInput" placeholder="Enter your email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="loginWithEmail()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                Continue with Email
+            </button>
+        </div>
+    </div>
+</div><div id="mainApp" class="min-h-screen p-4 hidden">
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-4">
+            <select id="currencySelect" onchange="changeCurrency()" class="bg-white rounded-lg px-3 py-2 shadow-md">
+                <option value="USD">USD ($)</option>
+                <option value="PHP">PHP (₱)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="JPY">JPY (¥)</option>
+            </select>
+            <button onclick="showHistory()" class="bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-lg shadow-md transition-colors">
+                📊 History
+            </button>
+        </div>
+        <div class="text-white font-semibold">
+            Welcome, <span id="userName">User</span>!
+        </div>
+    </div><div id="goalSetting" class="bg-white rounded-2xl p-6 shadow-xl mb-6">
+    <h3 class="text-2xl font-bold text-gray-800 mb-4">💎 Set Your Savings Goal</h3>
+    <div class="flex items-center space-x-4">
+        <input type="number" id="goalAmount" placeholder="Enter goal amount" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button onclick="setGoal()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+            Set Goal
+        </button>
+    </div>
+    <div id="currentGoal" class="mt-4 text-gray-600 hidden">
+        Current Goal: <span class="font-bold text-green-600" id="goalDisplay"></span>
+    </div>
+</div><div class="flex justify-center mb-6">
+    <div class="relative">
+        <div class="w-64 h-80 relative">
+            <div class="absolute bottom-0 w-full h-72 bg-gradient-to-b from-transparent to-blue-100 rounded-b-3xl border-4 border-blue-300 overflow-hidden cursor-pointer" onclick="showSaveDialog()">
+                <div id="permanentCoins" class="absolute inset-0 pointer-events-none"></div>
+                <div id="coinsContainer" class="absolute inset-0 pointer-events-none"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="bg-white bg-opacity-80 rounded-full p-4 shadow-lg">
+                        <div class="text-2xl">💰</div>
+                        <div class="text-sm font-semibold text-gray-700 mt-1">Tap to Save</div>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute top-0 w-full h-12 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-lg border-4 border-yellow-600"></div>
+        </div>
+        <div class="text-center mt-4">
+            <div class="text-white text-lg font-semibold">Current Savings</div>
+            <div class="text-white text-3xl font-bold" id="currentSavings">$0.00</div>
+            <div class="text-white text-sm" id="progressText">0% of goal reached</div>
+        </div>
+    </div>
+</div><div id="saveDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full mx-4">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">💰 Add Money to Jar</h3>
+        <input type="number" id="saveAmount" placeholder="Enter amount to save" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-4">
+        <div class="flex space-x-3">
+            <button onclick="saveMoney()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                Save Money
+            </button>
+            <button onclick="closeSaveDialog()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-lg w-full mx-4 max-h-96 overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-bold text-gray-800">📊 Savings History</h3>
+            <button onclick="closeHistory()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="historyList" class="space-y-3"></div>
+    </div>
+</div><script>
+    let currentUser = null;
+    let currentCurrency = 'USD';
+    let currencySymbol = '$';
+    let savingsGoal = 0;
+    let currentSavings = 0;
+    let savingsHistory = [];
+    let coinsInJar = [];
+
+    const currencySymbols = {
+        'USD': '$',
+        'PHP': '₱',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥'
+    };window.onload = function() {
+        setTimeout(() => {
+            document.getElementById('titleAnimation').classList.add('bounce-in');
+            document.getElementById('titleAnimation').style.opacity = '1';
+            setTimeout(() => {
+                document.getElementById('letsStartBtn').style.opacity = '1';
+                document.getElementById('letsStartBtn').classList.add('bounce-in');
+            }, 800);
+        }, 500);
+    };
+
+    document.getElementById('letsStartBtn').onclick = function() {
+        document.getElementById('welcomeScreen').style.display = 'none';
+        document.getElementById('loginScreen').classList.remove('hidden');
+    };
+
+    function loginWithGoogle() {
+        currentUser = "Google User";
+        document.getElementById('userName').textContent = currentUser;
+        showMainApp();
+    }
+
+    function loginWithEmail() {
+        const email = document.getElementById('emailInput').value;
+        if (email && email.includes('@')) {
+            currentUser = email.split('@')[0];
+            document.getElementById('userName').textContent = currentUser;
+            showMainApp();
+        } else {
+            alert('Please enter a valid email address');
+        }
+    }
+
+    function showMainApp() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        loadUserData();
+    }function changeCurrency() {
+        const select = document.getElementById('currencySelect');
+        currentCurrency = select.value;
+        currencySymbol = currencySymbols[currentCurrency];
+        updateDisplay();
+    }
+
+    function setGoal() {
+        const goalInput = document.getElementById('goalAmount');
+        const amount = parseFloat(goalInput.value);
+        if (amount && amount > 0) {
+            savingsGoal = amount;
+            document.getElementById('currentGoal').classList.remove('hidden');
+            document.getElementById('goalDisplay').textContent = currencySymbol + amount.toFixed(2);
+            updateDisplay();
+            goalInput.value = '';
+        } else {
+            alert('Please enter a valid goal amount');
+        }
+    }function showSaveDialog() {
+        if (savingsGoal === 0) {
+            alert('Please set your savings goal first!');
+            return;
+        }
+        document.getElementById('saveDialog').classList.remove('hidden');
+    }
+
+    function closeSaveDialog() {
+        document.getElementById('saveDialog').classList.add('hidden');
+        document.getElementById('saveAmount').value = '';
+    }
+
+    function saveMoney() {
+        const amountInput = document.getElementById('saveAmount');
+        const amount = parseFloat(amountInput.value);
+        if (amount && amount > 0) {
+            currentSavings += amount;
+            const now = new Date();
+            savingsHistory.unshift({
+                amount: amount,
+                date: now.toLocaleDateString(),
+                time: now.toLocaleTimeString(),
+                total: currentSavings
+            });
+            animateCoinDrop(amount);
+            updateDisplay();
+            closeSaveDialog();
+            saveUserData();
+        } else {
+            alert('Please enter a valid amount');
+        }
+    }
+
+    function animateCoinDrop(amount) {
+        const container = document.getElementById('coinsContainer');
+        const coinCount = Math.min(Math.floor(amount / 10) + 1, 8);
+        for (let i = 0; i < coinCount; i++) {
+            setTimeout(() => {
+                const coin = document.createElement('div');
+                coin.className = 'absolute coin-drop';
+                const leftPos = Math.random() * 70 + 15;
+                coin.style.left = leftPos + '%';
+                coin.style.top = '20px';
+                coin.style.fontSize = '24px';
+                coin.textContent = '🪙';
+                container.appendChild(coin);
+                setTimeout(() => {
+                    coin.remove();
+                    addPermanentCoin(leftPos);
+                }, 800);
+            }, i * 150);
+        }
+    }
+
+    function addPermanentCoin(leftPos) {
+        const permanentContainer = document.getElementById('permanentCoins');
+        let bottomPos = 10;
+        coinsInJar.forEach(existingCoin => {
+            if (Math.abs(existingCoin.left - leftPos) < 8) {
+                bottomPos = Math.max(bottomPos, existingCoin.bottom + 25);
+            }
+        });
+        const permanentCoin = document.createElement('div');
+        permanentCoin.className = 'coin-permanent';
+        permanentCoin.style.left = leftPos + '%';
+        permanentCoin.style.bottom = bottomPos + 'px';
+        permanentCoin.style.fontSize = '20px';
+        permanentCoin.textContent = '🪙';
+        permanentContainer.appendChild(permanentCoin);
+        coinsInJar.push({ left: leftPos, bottom: bottomPos });
+    }function updateDisplay() {
+        document.getElementById('currentSavings').textContent = currencySymbol + currentSavings.toFixed(2);
+        if (savingsGoal > 0) {
+            const percentage = Math.min((currentSavings / savingsGoal) * 100, 100);
+            document.getElementById('progressText').textContent = percentage.toFixed(1) + '% of goal reached';
+        }
+    }
+
+    function showHistory() {
+        const historyList = document.getElementById('historyList');
+        if (savingsHistory.length === 0) {
+            historyList.innerHTML = '<div class="text-gray-500 text-center py-4">No savings history yet.</div>';
+        } else {
+            historyList.innerHTML = savingsHistory.map(entry => `
+                <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-green-500">
+                    <div class="flex justify-between items-center">
+                        <div class="font-semibold text-green-600">+${currencySymbol}${entry.amount.toFixed(2)}</div>
+                        <div class="text-sm text-gray-500">${entry.date} ${entry.time}</div>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        Total: ${currencySymbol}${entry.total.toFixed(2)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function closeHistory() {
+        document.getElementById('historyModal').classList.add('hidden');
+    }
+
+    function saveUserData() {
+        const userData = { currentSavings, savingsGoal, savingsHistory, currentCurrency };
+        localStorage.setItem('cashup_' + currentUser, JSON.stringify(userData));
+    }
+
+    function loadUserData() {
+        const savedData = localStorage.getItem('cashup_' + currentUser);
+        if (savedData) {
+            const userData = JSON.parse(savedData);
+            currentSavings = userData.currentSavings || 0;
+            savingsGoal = userData.savingsGoal || 0;
+            savingsHistory = userData.savingsHistory || [];
+            currentCurrency = userData.currentCurrency || 'USD';
+            document.getElementById('currencySelect').value = currentCurrency;
+            currencySymbol = currencySymbols[currentCurrency];
+            if (savingsGoal > 0) {
+                document.getElementById('currentGoal').classList.remove('hidden');
+                document.getElementById('goalDisplay').textContent = currencySymbol + savingsGoal.toFixed(2);
+            }
+            updateDisplay();
+            coinsInJar = [];
+        }
+    }
+</script>
+</body>
+</html>
